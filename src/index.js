@@ -11,14 +11,13 @@ const client = new Client({
 		IntentsBitField.Flags.MessageContent,
     ],
 })
+
 let roles = []
+
 client.on('ready', () => { 
 	console.log(`Logged in as ${client.user?.tag}!`) 
 	updateRoles()
-	console.log({
-		roles: roles.map(role => role.name),
-		roleCount: roles.length,
-	})
+	printRoles()
 })
 const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 //adds color role to user
@@ -43,12 +42,11 @@ client.on('interactionCreate', (interaction) => {
 					name: hexColor.value,
 					color: hexColor.value,
 				})
-				console.log(client.guilds?.roles.cache.map(role => role.name))
 				console.log(`Created role ${hexColor.value} for ${interaction.user.tag}`)
 				updateRoles()
 			}
 
-			interaction.member?.roles.add(findColorRoleByValue(hexColor.value))		
+			interaction.member.roles.add(findColorRoleByValue(hexColor.value))
 			interaction.reply({ content: `Added role with color ${hexColor.value} to your name`, ephemeral: true })
 			console.log(`Added role with color ${hexColor.value} to ${interaction.user.tag}`)
 		}
@@ -87,7 +85,13 @@ client.on('interactionCreate', (interaction) => {
 })
 
 client.login(process.env.DISCORD_TOKEN)
-
+function printRoles(){
+	const printableRoles = []
+	roles.forEach(role => {
+		printableRoles.push(role.name)
+	})
+	console.log(printableRoles)
+}
 function updateRoles(){
 	const newRoles = []
 	client.guilds.cache.forEach(guild => {
