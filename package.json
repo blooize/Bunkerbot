@@ -2,8 +2,9 @@
   "name": "bunkerbot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
+    "start": "node src/index.js 1>app.log 2>errors.log",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -11,6 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "discord.js": "^14.14.1",
-    "dotenv": "^16.3.1"
-  }
+    "dotenv": "^16.3.1",
+    "nodemon": "^3.0.2"
+  },
+  "type": "module"
 }
