@@ -20,44 +20,52 @@ const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 //adds color role to user
 client.on('interactionCreate', (interaction) => {
 	if (!interaction.isChatInputCommand()) return
+	try {
+		if (interaction.commandName === 'name-color') {
+			const hexColor = interaction.options.get('hex-color')
+			if (!hexColorRegex.test(hexColor.value)) {
+				interaction.reply('Invalid Hex Color')
+				return
+			}
+			if (!findColorRoleByValue(hexColor.value)) {
+				
+				interaction.guild?.roles.create({
+					name: hexColor.value,
+					color: hexColor.value,
+				})
+				
+				console.log(`Created role ${hexColor.value} for ${interaction.user.tag}`)
+				updateRoles()
+			}
 	
-	if (interaction.commandName === 'name-color') {
-		const hexColor = interaction.options.get('hex-color')
-		if (!hexColorRegex.test(hexColor.value)) {
-			interaction.reply('Invalid Hex Color')
-			return
+			interaction.member.roles.add(findColorRoleByValue(hexColor.value))		
+			interaction.reply({ content: `Added role with color ${hexColor.value} to your name`, ephemeral: true })
+			console.log(`Added role with color ${hexColor.value} to ${interaction.user.tag}`)
 		}
-		if (!findColorRoleByValue(hexColor.value)) {
-			
-			interaction.guild?.roles.create({
-				name: hexColor.value,
-				color: hexColor.value,
-			})
-			
-			console.log(`Created role ${hexColor.value} for ${interaction.user.tag}`)
-			updateRoles()
-		}
+	} catch (error) {
+		interaction.reply({ content: 'It seems you entered your slash command wrongly.', ephemeral: true })
+	}
+	
+	try {
+		if (interaction.commandName === 'delete-color') {
 
-		interaction.member.roles.add(findColorRoleByValue(hexColor.value))		
-		interaction.reply({ content: `Added role with color ${hexColor.value} to your name`, ephemeral: true })
-		console.log(`Added role with color ${hexColor.value} to ${interaction.user.tag}`)
+			const userRoles = interaction.member.roles.cache.filter(role => hexColorRegex.test(role.name))
+			console.log(userRoles)
+	
+			if (!userRoles) {
+				interaction.reply('You dont have a color role')
+				return
+			} 
+			interaction.member.roles.remove(userRoles.first())
+			console.log(`Deleted role ${userRoles.first().name} from ${interaction.user.tag}`)
+			interaction.reply({content: 'Removed your color role', ephemeral: true})
+			console.log(`Removed color role from ${interaction.user.tag}`)
+			
+		}
+	} catch (error) {
+		interaction.reply({ content: 'It seems you entered your slash command wrongly.', ephemeral: true })
 	}
 
-	if (interaction.commandName === 'delete-color') {
-
-		const userRoles = interaction.member.roles.cache.filter(role => hexColorRegex.test(role.name))
-		console.log(userRoles)
-
-		if (!userRoles) {
-			interaction.reply('You dont have a color role')
-			return
-		} 
-		interaction.member.roles.remove(userRoles.first())
-		console.log(`Deleted role ${userRoles.first().name} from ${interaction.user.tag}`)
-		interaction.reply({content: 'Removed your color role', ephemeral: true})
-		console.log(`Removed color role from ${interaction.user.tag}`)
-		
-	}
 })
 
 client.login(process.env.DISCORD_TOKEN)
