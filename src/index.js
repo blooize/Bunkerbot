@@ -21,7 +21,7 @@ client.on('ready', () => {
 })
 const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 //adds color role to user
-client.on('interactionCreate', (interaction) => {
+client.on('interactionCreate',  async (interaction) => {
 	if (!interaction.isChatInputCommand()) return
 	try {
 		if (interaction.commandName === 'name-color') {
@@ -36,19 +36,22 @@ client.on('interactionCreate', (interaction) => {
 				return
 			}
 
-			if (!findColorRoleByValue(hexColor.value)) {
-
-				interaction.guild.roles.create({
-					name: hexColor.value,
+			if (!findRoleByValue(interaction.user.tag)) {
+				console.log('entered creation')
+				await interaction.guild.roles.create({
+					name: interaction.user.tag,
 					color: hexColor.value,
-				})
-				console.log(`Created role ${hexColor.value} for ${interaction.user.tag}`)
+				}).then(console.log(`Created role ${interaction.user.tag}`))
+				
 				updateRoles()
 			}
+			setTimeout(() => { 
+				interaction.member.roles.add(findRoleByValue(interaction.user.tag)).then( () => {
+					interaction.reply({ content: `Added role with color ${hexColor.value} to your name`, ephemeral: true })
+					console.log(`Added role with color ${hexColor.value} to ${interaction.user.tag}`)
+				})
+			}, 1000)
 
-			interaction.member.roles.add(findColorRoleByValue(hexColor.value))
-			interaction.reply({ content: `Added role with color ${hexColor.value} to your name`, ephemeral: true })
-			console.log(`Added role with color ${hexColor.value} to ${interaction.user.tag}`)
 		}
 	} catch (error) {
 		interaction.reply({ content: 'It seems you entered your slash command wrongly.', ephemeral: true })
@@ -61,21 +64,21 @@ client.on('interactionCreate', (interaction) => {
 	try {
 		if (interaction.commandName === 'delete-color') {
 
-			const userRoles = interaction.member.roles.cache.filter(role => hexColorRegex.test(role.name))
+			const userRoles = interaction.member.roles.cache.find(role => role.name === interaction.user.tag)
 			console.log(userRoles)
 	
 			if (!userRoles) {
 				interaction.reply({content: 'You dont seem to have a role.', ephemeral: true})
 				return
 			} 
-			interaction.member.roles.remove(userRoles.first())
-			console.log(`Deleted role ${userRoles.first().name} from ${interaction.user.tag}`)
-			interaction.reply({content: 'Removed your color role', ephemeral: true})
-			console.log(`Removed color role from ${interaction.user.tag}`)
-			
+			interaction.member?.roles.remove(userRoles).then( () => {
+				interaction.reply({content: 'Removed your color role', ephemeral: true})
+				console.log(`Removed color role from ${interaction.user.tag}`)
+				roles.remove(userRoles.name)
+			 })
 		}
 	} catch (error) {
-		interaction.reply({ content: 'It seems you entered your slash command wrongly.', ephemeral: true })
+		interaction.reply({ content: 'Something went wrong. Either you entered the command wrongly or ask @antifascism wtf happened', ephemeral: true })
 		console.log({
 			error: error,
 			interaction: interaction,
@@ -103,6 +106,7 @@ function updateRoles(){
 	roles = newRoles
 }
 
-function findColorRoleByValue(value) {
-	return roles.find(role => role.name === value && hexColorRegex.test(role.name))
+function findRoleByValue(value) {
+	const role = roles.find(role => role.name === value)
+	return role
 }
