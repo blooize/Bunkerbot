@@ -1,7 +1,20 @@
 import dotenv from 'dotenv'
+import winston from 'winston'
 dotenv.config()
-
 import { Client, IntentsBitField } from 'discord.js'
+
+const logger = winston.createLogger({
+	level: 'info',
+	format: winston.format.combine(
+		winston.format.timestamp(),
+		winston.format.json(),
+	),
+	transports: [
+		new winston.transports.File({ filename: 'error.log', level: 'error' }),
+		new winston.transports.File({ filename: 'app.log' }),
+	]
+	
+})
 
 const client = new Client({
     intents: [
@@ -15,7 +28,7 @@ const client = new Client({
 let roles = []
 
 client.on('ready', () => { 
-	console.log(`Logged in as ${client.user?.tag}!`) 
+	logger.info(`Logged in as ${client.user?.tag}!`) 
 	updateRoles()
 	printRoles()
 })
@@ -33,29 +46,30 @@ client.on('interactionCreate',  async (interaction) => {
 
 			if (interaction.member?.roles.cache.find(role => hexColorRegex.test(role.name))) {
 				interaction.reply({content: 'You already have a color role', ephemeral: true})
+				logger.info(`User ${interaction.user.tag} already has a color role`)
 				return
 			}
 
 			if (!findRoleByValue(interaction.user.tag)) {
-				console.log('entered creation')
+				logger.info('entered creation')
 				await interaction.guild.roles.create({
 					name: interaction.user.tag,
 					color: hexColor.value,
-				}).then(console.log(`Created role ${interaction.user.tag}`))
+				}).then(logger.info(`Created role ${interaction.user.tag}`))
 				
 				updateRoles()
 			}
 			setTimeout(() => { 
 				interaction.member.roles.add(findRoleByValue(interaction.user.tag)).then( () => {
 					interaction.reply({ content: `Added role with color ${hexColor.value} to your name`, ephemeral: true })
-					console.log(`Added role with color ${hexColor.value} to ${interaction.user.tag}`)
+					logger.info(`Added role with color ${hexColor.value} to ${interaction.user.tag}`)
 				})
 			}, 1000)
 
 		}
 	} catch (error) {
 		interaction.reply({ content: 'It seems you entered your slash command wrongly.', ephemeral: true })
-		console.log({
+		logger.error({
 			error: error,
 			interaction: interaction,
 		})
@@ -65,21 +79,21 @@ client.on('interactionCreate',  async (interaction) => {
 		if (interaction.commandName === 'delete-color') {
 
 			const userRoles = interaction.member.roles.cache.find(role => role.name === interaction.user.tag)
-			console.log(userRoles)
+			logger.info(userRoles)
 	
 			if (!userRoles) {
 				interaction.reply({content: 'You dont seem to have a role.', ephemeral: true})
 				return
-			} 
+			}
 			interaction.member?.roles.remove(userRoles).then( () => {
 				interaction.reply({content: 'Removed your color role', ephemeral: true})
-				console.log(`Removed color role from ${interaction.user.tag}`)
+				logger.info(`Removed color role from ${interaction.user.tag}`)
 				roles.remove(userRoles.name)
 			 })
 		}
 	} catch (error) {
 		interaction.reply({ content: 'Something went wrong. Either you entered the command wrongly or ask @antifascism wtf happened', ephemeral: true })
-		console.log({
+		logger.error({
 			error: error,
 			interaction: interaction,
 		})
@@ -93,7 +107,7 @@ function printRoles(){
 	roles.forEach(role => {
 		printableRoles.push(role.name)
 	})
-	console.log(printableRoles)
+	logger.info(printableRoles)
 }
 function updateRoles(){
 	const newRoles = []
