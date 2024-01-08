@@ -5,6 +5,6 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: always
-  volumes:
-    - ${PWD}/app.log:/app/app.log
-    - ${PWD}/error.log:/app/error.log
+    volumes:
+      - ${PWD}/app.log:/app/app.log
+      - ${PWD}/error.log:/app/error.log
